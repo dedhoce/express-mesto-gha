@@ -31,7 +31,7 @@ app.use('/cards', cardsRouter);
 app.use('/:linkIsNot', (req, res) => {
   const {linkIsNot} = req.params
   if (linkIsNot !== "users" || linkIsNot !== "cards") {
-    res.status(404).send(`По адресу http://localhost:3000/${linkIsNot} и запросу ${req.method} ничего нет`)
+    res.status(404).send({ message: `По адресу http://localhost:3000/${linkIsNot} и запросу ${req.method} ничего нет`})
   }
 })
 

@@ -37,7 +37,7 @@ function deleteCard(req, res) {
     .findByIdAndDelete(cardId)
     .then((card) => {
       if (!card) {
-        return res.status(400).send({ message: "Card not found" });
+        return res.status(404).send({ message: "Card not found" });
       }
       return res.status(200).send(card);
     })
