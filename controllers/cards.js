@@ -31,17 +31,19 @@ function createCard(req, res) {
 function deleteCard(req, res) {
   console.log(req.params);
 
-  const { id } = req.params;
+  const { cardId } = req.params;
 
   return cardModel
-    .findById(id)
+    .findByIdAndDelete(cardId)
     .then((card) => {
       if (!card) {
-        return res.status(404).send({ message: "Card not found" });
+        return res.status(400).send({ message: "Card not found" });
       }
-      return res.status(200).send(user);
+      return res.status(200).send(card);
     })
     .catch((err) => {
+      console.log(err.name)
+      console.log(err.message)
       if (err.name === "CastError") {
         return res.status(400).send({ message: "Invalid ID" });
       }
@@ -52,7 +54,6 @@ function deleteCard(req, res) {
 function likeCard(req, res) {
 
   const { cardId } = req.params;
-
   return cardModel
     .findByIdAndUpdate(
       cardId,
@@ -63,7 +64,7 @@ function likeCard(req, res) {
       if (!card) {
         return res.status(404).send({ message: "Card not found" });
       }
-      return res.status(202).send(card);
+      return res.status(201).send(card);
     })
     .catch((err) => {
       if (err.name === "CastError") {
@@ -87,7 +88,7 @@ function deleteLikeCard(req, res) {
       if (!card) {
         return res.status(404).send({ message: "Card not found" });
       }
-      return res.status(202).send(card);
+      return res.status(200).send(card);
     })
     .catch((err) => {
       if (err.name === "CastError") {

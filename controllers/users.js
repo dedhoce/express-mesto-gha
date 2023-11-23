@@ -3,10 +3,10 @@ const userModel = require("../models/user");
 function getUser(req, res) {
   console.log(req.params);
 
-  const { id } = req.params;
-
+  const { userId } = req.params;
+  console.log(userId)
   return userModel
-    .findById(id)
+    .findById(userId)
     .then((user) => {
       if (!user) {
         return res.status(404).send({ message: "User not found" });
@@ -51,16 +51,14 @@ function createUser(req, res) {
 
 function updateUserInfo(req, res) {
   const userInfo = req.body;
-  console.log(userInfo);
-  console.log(req.user._id)
 
   return userModel
-    .findByIdAndUpdate(req.user._id, userInfo)
+    .findByIdAndUpdate(req.user._id, userInfo, { runValidators: true })
     .then((user) => {
       userModel.findById(req.user._id).then((userUpdate) => {
         res.send(userUpdate)
       })
-      return res.status(202);
+      return res.status(200);
     })
     .catch((err) => {
       if (err.name === "ValidationError") {
@@ -72,12 +70,15 @@ function updateUserInfo(req, res) {
 
 function updateUserAvatar(req, res) {
   const userAvatar = req.body;
-  console.log(userAvatar);
+  console.log(req.user._id);
 
   return userModel
     .findByIdAndUpdate(req.user._id, userAvatar)
     .then((user) => {
-      return res.status(202).send(user);
+      userModel.findById(req.user._id).then((userUpdate) => {
+        res.send(userUpdate)
+      })
+      return res.status(200);
     })
     .catch((err) => {
       if (err.name === "ValidationError") {
