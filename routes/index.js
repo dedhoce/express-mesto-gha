@@ -11,14 +11,6 @@ router.get('/', function (req, res) {
   res.status(HTTP_STATUS_OK).send('Express GET');
 });
 
-router.use((req, res, next) => {
-  req.user = {
-    _id: '655cad73c2ff301cc06ac965' // _id созданного в предыдущем пункте пользователя
-  };
-
-  next();
-});
-
 router.use('/users', usersRouter);
 
 router.use('/cards', cardsRouter);
