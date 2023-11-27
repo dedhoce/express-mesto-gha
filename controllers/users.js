@@ -1,4 +1,9 @@
 const userModel = require("../models/user");
+const { typeError } = require("../utils/errors")
+const {
+  HTTP_STATUS_OK,                   // 200
+  HTTP_STATUS_CREATED               // 201
+} = require('../utils/constantsError')
 
 function getUser(req, res) {
   console.log(req.params);
@@ -7,17 +12,12 @@ function getUser(req, res) {
   console.log(userId)
   return userModel
     .findById(userId)
+    .orFail()
     .then((user) => {
-      if (!user) {
-        return res.status(404).send({ message: "User not found" });
-      }
-      return res.status(200).send(user);
+      return res.status(HTTP_STATUS_OK).send(user);
     })
     .catch((err) => {
-      if (err.name === "CastError") {
-        return res.status(400).send({ message: "Invalid ID" });
-      }
-      return res.status(500).send({ message: "Server Error" });
+      typeError(err, res)
     });
 }
 
@@ -25,10 +25,10 @@ function getAllUsers(req, res) {
   return userModel
     .find()
     .then((users) => {
-      return res.status(200).send(users);
+      return res.status(HTTP_STATUS_OK).send(users);
     })
     .catch((err) => {
-      return res.status(500).send({ message: "Server Error" });
+      typeError(err, res)
     });
 }
 
@@ -39,53 +39,37 @@ function createUser(req, res) {
   return userModel
     .create(userData)
     .then((user) => {
-      return res.status(201).send(user);
+      return res.status(HTTP_STATUS_CREATED).send(user);
     })
     .catch((err) => {
-      if (err.name === "ValidationError") {
-        return res.status(400).send({ message: err.message });
-      }
-      return res.status(500).send({ message: "Server Error" });
+      typeError(err, res)
     });
 }
 
-function updateUserInfo(req, res) {
-  const userInfo = req.body;
-
+function updateUserData(req, res) {
+  const { userId } = req.params;
   return userModel
-    .findByIdAndUpdate(req.user._id, userInfo, { runValidators: true })
+    .findByIdAndUpdate(userId, req,body, {
+      returnDocument: after,
+      runValidators: true
+    })
     .then((user) => {
-      userModel.findById(req.user._id).then((userUpdate) => {
-        res.send(userUpdate)
-      })
-      return res.status(200);
+      return res.status(HTTP_STATUS_OK).send(user)
     })
     .catch((err) => {
-      if (err.name === "ValidationError") {
-        return res.status(400).send({ message: err.message });
-      }
-      return res.status(500).send({ message: "Server Error" });
+      typeError(err, res)
     });
+}
+
+
+function updateUserInfo(req, res) {
+
+  updateUserData(req, res)
 }
 
 function updateUserAvatar(req, res) {
-  const userAvatar = req.body;
-  console.log(req.user._id);
 
-  return userModel
-    .findByIdAndUpdate(req.user._id, userAvatar)
-    .then((user) => {
-      userModel.findById(req.user._id).then((userUpdate) => {
-        res.send(userUpdate)
-      })
-      return res.status(200);
-    })
-    .catch((err) => {
-      if (err.name === "ValidationError") {
-        return res.status(400).send({ message: err.message });
-      }
-      return res.status(500).send({ message: "Server Error" });
-    });
+  updateUserData(req, res)
 }
 
 module.exports = {
@@ -93,5 +77,5 @@ module.exports = {
   getAllUsers,
   updateUserInfo,
   updateUserAvatar,
-  getUser,
+  getUser
 };

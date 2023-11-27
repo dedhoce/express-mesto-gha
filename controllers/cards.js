@@ -1,13 +1,20 @@
 const cardModel = require("../models/card");
+const { serverError, typeError } = require("../utils/errors")
+
+const {
+  HTTP_STATUS_OK,                   // 200
+  HTTP_STATUS_CREATED               // 201
+} = require('../utils/constantsError')
 
 function getAllCards(req, res) {
   return cardModel
     .find()
+    .orFail()
     .then((cards) => {
-      return res.status(200).send(cards);
+      return res.status(HTTP_STATUS_OK).send(cards);
     })
     .catch((err) => {
-      return res.status(500).send({ message: "Server Error" });
+      serverError(res)
     });
 }
 
@@ -18,13 +25,10 @@ function createCard(req, res) {
   return cardModel
     .create(cardData)
     .then((card) => {
-      return res.status(201).send(card);
+      return res.status(HTTP_STATUS_CREATED).send(card);
     })
     .catch((err) => {
-      if (err.name === "ValidationError") {
-        return res.status(400).send({ message: err.message });
-      }
-      return res.status(500).send({ message: "Server Error" });
+      typeError(err, res)
     });
 }
 
@@ -35,19 +39,12 @@ function deleteCard(req, res) {
 
   return cardModel
     .findByIdAndDelete(cardId)
+    .orFail()
     .then((card) => {
-      if (!card) {
-        return res.status(404).send({ message: "Card not found" });
-      }
-      return res.status(200).send(card);
+      return res.status(HTTP_STATUS_OK).send(card);
     })
     .catch((err) => {
-      console.log(err.name)
-      console.log(err.message)
-      if (err.name === "CastError") {
-        return res.status(400).send({ message: "Invalid ID" });
-      }
-      return res.status(500).send({ message: "Server Error" });
+      typeError(err, res)
     });
 }
 
@@ -60,17 +57,12 @@ function likeCard(req, res) {
       { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
       { new: true },
     )
+    .orFail()
     .then((card) => {
-      if (!card) {
-        return res.status(404).send({ message: "Card not found" });
-      }
-      return res.status(201).send(card);
+      return res.status(HTTP_STATUS_OK).send(card);
     })
     .catch((err) => {
-      if (err.name === "CastError") {
-        return res.status(400).send({ message: "Invalid ID" });
-      }
-      return res.status(500).send({ message: "Server Error" });
+      typeError(err, res)
     });
 }
 
@@ -84,17 +76,12 @@ function deleteLikeCard(req, res) {
       { $pull: { likes: req.user._id } }, // убрать _id из массива
       { new: true },
     )
+    .orFail()
     .then((card) => {
-      if (!card) {
-        return res.status(404).send({ message: "Card not found" });
-      }
-      return res.status(200).send(card);
+      return res.status(HTTP_STATUS_OK).send(card);
     })
     .catch((err) => {
-      if (err.name === "CastError") {
-        return res.status(400).send({ message: "Invalid ID" });
-      }
-      return res.status(500).send({ message: "Server Error" });
+      typeError(err, res)
     });
 }
 
