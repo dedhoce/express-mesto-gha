@@ -8,8 +8,7 @@ const {
 
 function getAllCards(req, res) {
   return cardModel
-    .find()
-    .orFail()
+    .find()    
     .then((cards) => {
       return res.status(HTTP_STATUS_OK).send(cards);
     })
