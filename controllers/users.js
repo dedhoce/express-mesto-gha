@@ -47,35 +47,53 @@ function createUser(req, res) {
 }
 
 function updateUserData(req, res) {
-  const { userId } = req.params;
+
+  const userId = req.user._id;
   return userModel
-    .findByIdAndUpdate(userId, req,body, {
-      returnDocument: after,
-      runValidators: true
+    .findByIdAndUpdate(userId, req.body, {
+      runValidators: true,
+      returnDocument: 'after'
     })
-    .then((user) => {
-      return res.status(HTTP_STATUS_OK).send(user)
-    })
-    .catch((err) => {
-      typeError(err, res)
-    });
+    .orFail()
 }
 
+function cachingDecorator(func) {
+  let cache = new Map()
 
-function updateUserInfo(req, res) {
+  return function(req, res) {
+    //let {name, about, avatar} = req.body
+    //console.log(cache)
+    if (cache.has(res)) {   // если кеш содержит такой ключ,
+      console.log(1)
 
-  updateUserData(req, res)
+      return cache.get(res)  // читаем из него результат
+        .clone()
+        .then((user) => {
+          return res.status(HTTP_STATUS_OK).send(user)
+        })
+        .catch((err) => {
+          console.log(err.message)
+          typeError(err, res)
+        })
+    }
+    console.log(2)
+    let result = func(req, res)   // иначе, вызываем функцию,
+
+    cache.set(res, result); // и кешируем (запоминаем) результат
+    return result
+      .then((user) => res.status(HTTP_STATUS_OK).send(user))
+      .catch((err) => {
+        typeError(err, res)
+      });
+  }
 }
 
-function updateUserAvatar(req, res) {
-
-  updateUserData(req, res)
-}
+updateUserData = cachingDecorator(updateUserData)
 
 module.exports = {
   createUser,
   getAllUsers,
-  updateUserInfo,
-  updateUserAvatar,
-  getUser
+  getUser,
+  updateUserData
 };
+

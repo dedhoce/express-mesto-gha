@@ -11,7 +11,6 @@ const serverError = (res) => {
 }
 
 const typeError = (err, res) => {
-  console.log(err)
   if (err instanceof mongoose.Error.CastError) {
     return res.status(HTTP_STATUS_BAD_REQUEST).send({message : "Invalid ID"});
   }
