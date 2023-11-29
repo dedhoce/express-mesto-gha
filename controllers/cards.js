@@ -8,12 +8,12 @@ const {
 
 function getAllCards(req, res) {
   return cardModel
-    .find()    
+    .find()
     .then((cards) => {
       return res.status(HTTP_STATUS_OK).send(cards);
     })
     .catch((err) => {
-      serverError(res)
+      serverError(err, res)
     });
 }
 
