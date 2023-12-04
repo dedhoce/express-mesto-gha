@@ -5,7 +5,7 @@ const cardsRouter = require('./cards');
 const {
   HTTP_STATUS_OK,                   // 200
   HTTP_STATUS_NOT_FOUND            // 404
-} = require('../utils/constantsError')
+} = require('../utils/constantsStatusCode')
 
 router.get('/', function (req, res) {
   res.status(HTTP_STATUS_OK).send('Express GET');

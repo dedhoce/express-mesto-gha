@@ -1,9 +1,11 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const userModel = require("../models/user");
-const { typeError } = require("../utils/errors")
+const { typeError } = require("../middlewares/handleErrors")
 const {
   HTTP_STATUS_OK,                   // 200
   HTTP_STATUS_CREATED               // 201
-} = require('../utils/constantsError')
+} = require('../utils/constantsStatusCode')
 
 function getUser(req, res) {
   console.log(req.params);
@@ -16,9 +18,22 @@ function getUser(req, res) {
     .then((user) => {
       return res.status(HTTP_STATUS_OK).send(user);
     })
-    .catch((err) => {
-      typeError(err, res)
-    });
+    .catch(next);
+}
+
+function getOwnUser(req, res) {
+  console.log(req.user._id);
+
+  const { userId } = req.user._id;
+  console.log(userId)
+  return userModel
+    .findById(userId)
+    .select('+password')
+    .orFail()
+    .then((user) => {
+      return res.status(HTTP_STATUS_OK).send(user);
+    })
+    .catch(next);
 }
 
 function getAllUsers(req, res) {
@@ -27,24 +42,42 @@ function getAllUsers(req, res) {
     .then((users) => {
       return res.status(HTTP_STATUS_OK).send(users);
     })
-    .catch((err) => {
-      typeError(err, res)
-    });
+    .catch(next);
 }
 
 function createUser(req, res) {
-  const userData = req.body;
-  console.log(userData);
+  const {email, password} = req.body;
 
-  return userModel
-    .create(userData)
+  return bcrypt.hash(password, 10)
+    .then((hash) => {
+      userModel.create({
+        email,
+        password: hash
+      })
+    })
     .then((user) => {
       return res.status(HTTP_STATUS_CREATED).send(user);
     })
-    .catch((err) => {
-      typeError(err, res)
-    });
+    .catch(next);
 }
+
+function login (req, res) {
+  const { email, password } = req.body;
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      // аутентификация успешна! пользователь в переменной user
+      // создадим токен
+      const token = jwt.sign(
+        { _id: user._id },
+        'some-secret-key',
+        { expiresIn: '7d' });
+
+      // вернём токен
+      res.status(HTTP_STATUS_OK).send({ token });
+    })
+    .catch(next);
+};
 
 function updateUserData(req, res) {
 
@@ -60,10 +93,7 @@ function updateUserData(req, res) {
       console.log('then')
       return res.status(HTTP_STATUS_OK).send(user);
     })
-    .catch((err) => {
-      //console.log(err.message)
-      typeError(err, res)
-    })
+    .catch(next)
 }
 
 function updatingInfoDecorator(func) {
@@ -97,8 +127,10 @@ const updateAvatar = updatingAvatarDecorator(updateUserData)
 
 module.exports = {
   createUser,
+  login,
   getAllUsers,
   getUser,
+  getOwnUser,
   updateInfo,
   updateAvatar
 };
