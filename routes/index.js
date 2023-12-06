@@ -17,14 +17,14 @@ router.get('/', function (req, res) {
 router.post('/signin', celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net', 'ru'] } }),
-    password: Joi.string().required().min(8).pattern(new RegExp(/^[a-zA-Z0-9]{8,30}$/))
+    password: Joi.string().required().min(8).pattern(new RegExp(/^[a-zA-Z0-9\_]{8,30}$/))
   })
 }), login);
 
 router.post('/signup', celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net', 'ru'] } }),
-    password: Joi.string().required().min(8).pattern(new RegExp(/^[a-zA-Z0-9]{8,30}$/)),
+    password: Joi.string().required().min(8).pattern(new RegExp(/^[a-zA-Z0-9\_]{8,30}$/)),
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
     avatar: Joi.string().pattern(new RegExp(/^[www.]*https{0,1}\:\/\/[\w\b-._~:\/?#[\]@!\$&\'\(\)\*\+,;=]+$/))

@@ -42,17 +42,33 @@ function getAllUsers(req, res, next) {
 }
 
 function createUser(req, res, next) {
-  const {email, password} = req.body;
+  const {email, password, name, about, avatar} = req.body;
 
   return bcrypt.hash(password, 10)
     .then((hash) => {
       userModel
       .create({
         email,
-        password: hash
+        password: hash,
+        name,
+        about,
+        avatar
       })
-      .then((user) => {
-        return res.status(HTTP_STATUS_CREATED).send(user);
+      .then(({
+        _id,
+        email,
+        name,
+        about,
+        avatar
+      }) => {
+
+        return res.status(HTTP_STATUS_CREATED).send({
+          _id,
+          email,
+          name,
+          about,
+          avatar
+        });
       })
       .catch(next)
     })
@@ -72,13 +88,15 @@ function login (req, res, next) {
         { expiresIn: '7d' });
 
       // вернём токен
-      res.status(HTTP_STATUS_OK).cookie('jwt', token, {
+      res.status(HTTP_STATUS_OK)
+      .send({ message : "Токен успешно отправлен в куки" })
+      .cookie('jwt', token, {
       // token - наш JWT токен, который мы отправляем
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
         sameSite: true
       })
-      .end(); // если у ответа нет тела, можно использовать метод end);
+      .end()  // если у ответа нет тела, можно использовать метод end);
     })
     .catch(next);
 };
