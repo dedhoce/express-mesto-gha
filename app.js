@@ -1,27 +1,22 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const cookieParser = require('cookie-parser');
+
 const { PORT = 3000, BASE_PATH } = process.env;
 
 const appRouter = require('./routes/index')
-const { createUser, login } = require('./controllers/users')
 
-const auth = require('./middlewares/auth')
 const errorsValidator = require('./middlewares/handleErrors')
 const { errors } = require('celebrate');
 
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser()); // подключаем парсер кук как мидлвэр
 
 mongoose.connect("mongodb://localhost:27017/mestodb").then(() => {
   console.log("Connect Mongo");
 });
-
-app.post('/signin', login);
-
-app.post('/signup', createUser);
-
-app.use(auth)
 
 app.use(appRouter);
 

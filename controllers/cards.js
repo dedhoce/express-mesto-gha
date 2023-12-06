@@ -1,13 +1,13 @@
 const cardModel = require("../models/card");
-const { serverError, typeError } = require("../middlewares/handleErrors")
 
 const {
   HTTP_STATUS_OK,                   // 200
-  HTTP_STATUS_CREATED,             // 201
-  HTTP_STATUS_BAD_REQUEST           // 400
+  HTTP_STATUS_CREATED             // 201
 } = require('../utils/constantsStatusCode')
 
-function getAllCards(req, res) {
+const { AlienCard } = require('../utils/ErrorClass')
+
+function getAllCards(req, res, next) {
   return cardModel
     .find()
     .then((cards) => {
@@ -16,7 +16,7 @@ function getAllCards(req, res) {
     .catch(next);
 }
 
-function createCard(req, res) {
+function createCard(req, res, next) {
   req.body.owner = req.user._id;
   const cardData = req.body;
 
@@ -28,28 +28,33 @@ function createCard(req, res) {
     .catch(next);
 }
 
-function deleteCard(req, res) {
-  console.log(req.params);
-
+function deleteCard(req, res, next) {
   const { cardId } = req.params;
-  try {
-    if(cardId === req.user._id) {
-      return cardModel
-        .findByIdAndDelete(cardId)
-        .orFail()
-        .then((card) => {
-          return res.status(HTTP_STATUS_OK).send(card);
-        })
-        .catch(next);
-    }
-    return Promise.reject(new Error('Чужая карточка!'))
-  } catch (err) {
-    next(err)
-  }
+
+  return cardModel
+    .findById(cardId)
+    .orFail()
+    .then((card) => {
+      try {
+        if(card.owner.valueOf() === req.user._id) {
+          return cardModel
+            .deleteOne({ _id: cardId })
+            .then((card) => {
+              return res.status(HTTP_STATUS_OK).send(card);
+            })
+            .catch(next);
+        }
+        throw new AlienCard('Можно удалять только свои карточки!')
+      } catch (err) {
+        next(err)
+      }
+    })
+    .catch(next)
 }
 
-function toggleLikeCard(req, res, methodObj) {
+function toggleLikeCard(req, res, methodObj, next) {
   const { cardId } = req.params;
+
   return cardModel
     .findByIdAndUpdate(
       cardId,
@@ -64,11 +69,12 @@ function toggleLikeCard(req, res, methodObj) {
 }
 
 function togglelikeCardDecorator(func) {
+
   return function(req, res) {
-    if (req.method === 'put') {
+    if (req.method === 'PUT') {
       return func(req, res, { $addToSet: { likes: req.user._id } }) // добавить _id в массив, если его там нет
     }
-    if (req.method === 'delete') {
+    if (req.method === 'DELETE') {
       return func(req, res, { $pull: { likes: req.user._id } })   // убрать _id из массива
     }
   }

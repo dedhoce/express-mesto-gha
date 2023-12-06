@@ -1,14 +1,13 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const userModel = require("../models/user");
-const { typeError } = require("../middlewares/handleErrors")
+
 const {
   HTTP_STATUS_OK,                   // 200
   HTTP_STATUS_CREATED               // 201
 } = require('../utils/constantsStatusCode')
 
-function getUser(req, res) {
-  console.log(req.params);
+function getUser(req, res, next) {
 
   const { userId } = req.params;
   console.log(userId)
@@ -21,14 +20,10 @@ function getUser(req, res) {
     .catch(next);
 }
 
-function getOwnUser(req, res) {
-  console.log(req.user._id);
+function getOwnUser(req, res, next) {
 
-  const { userId } = req.user._id;
-  console.log(userId)
   return userModel
-    .findById(userId)
-    .select('+password')
+    .findById(req.user._id)
     .orFail()
     .then((user) => {
       return res.status(HTTP_STATUS_OK).send(user);
@@ -36,7 +31,8 @@ function getOwnUser(req, res) {
     .catch(next);
 }
 
-function getAllUsers(req, res) {
+function getAllUsers(req, res, next) {
+
   return userModel
     .find()
     .then((users) => {
@@ -45,26 +41,28 @@ function getAllUsers(req, res) {
     .catch(next);
 }
 
-function createUser(req, res) {
+function createUser(req, res, next) {
   const {email, password} = req.body;
 
   return bcrypt.hash(password, 10)
     .then((hash) => {
-      userModel.create({
+      userModel
+      .create({
         email,
         password: hash
       })
-    })
-    .then((user) => {
-      return res.status(HTTP_STATUS_CREATED).send(user);
+      .then((user) => {
+        return res.status(HTTP_STATUS_CREATED).send(user);
+      })
+      .catch(next)
     })
     .catch(next);
 }
 
-function login (req, res) {
+function login (req, res, next) {
   const { email, password } = req.body;
 
-  return User.findUserByCredentials(email, password)
+  return userModel.findUserByCredentials(email, password)
     .then((user) => {
       // аутентификация успешна! пользователь в переменной user
       // создадим токен
@@ -74,15 +72,20 @@ function login (req, res) {
         { expiresIn: '7d' });
 
       // вернём токен
-      res.status(HTTP_STATUS_OK).send({ token });
+      res.status(HTTP_STATUS_OK).cookie('jwt', token, {
+      // token - наш JWT токен, который мы отправляем
+        maxAge: 3600000 * 24 * 7,
+        httpOnly: true,
+        sameSite: true
+      })
+      .end(); // если у ответа нет тела, можно использовать метод end);
     })
     .catch(next);
 };
 
-function updateUserData(req, res) {
-
+function updateUserData(req, res, next) {
   const userId = req.user._id;
-  console.log(userId)
+
   return userModel
     .findByIdAndUpdate(userId, req.body, {
       runValidators: true,
@@ -97,6 +100,7 @@ function updateUserData(req, res) {
 }
 
 function updatingInfoDecorator(func) {
+
   return function(req, res) {
     let { name, about } = req.body
     if (name || about) {
@@ -110,6 +114,7 @@ function updatingInfoDecorator(func) {
 }
 
 function updatingAvatarDecorator(func) {
+
   return function(req, res) {
     let { avatar } = req.body
     if (avatar) {

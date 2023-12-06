@@ -1,4 +1,9 @@
 const mongoose = require("mongoose");
+const {
+  AlienCard,
+  NeedAuthorized,
+  NocorrectlyPswdOrEmail
+} = require('../utils/ErrorClass')
 
 const {
   HTTP_STATUS_BAD_REQUEST,          // 400
@@ -13,6 +18,8 @@ const serverError = (res) => {
 }
 
 module.exports = (err, req, res, next) => {
+  console.log(err)
+
   if (err instanceof mongoose.Error.CastError) {
     return res.status(HTTP_STATUS_BAD_REQUEST).send({message : "Invalid ID"});
   }
@@ -22,14 +29,14 @@ module.exports = (err, req, res, next) => {
   if (err instanceof mongoose.Error.DocumentNotFoundError) {
     return res.status(HTTP_STATUS_NOT_FOUND).send({ message : "Document not found" });
   }
-  if (err.name === 'Необходима авторизация') {
-    return res.status(HTTP_STATUS_UNAUTHORIZED).send({ message : 'Необходима авторизация' });
+  if (err instanceof NeedAuthorized) {
+    return res.status(HTTP_STATUS_UNAUTHORIZED).send({ message : err.message });
   }
-  if (err.name === 'Неправильные почта или пароль') {
-    return res.status(HTTP_STATUS_UNAUTHORIZED).send({ message : 'Неправильные почта или пароль' });
+  if (err instanceof NocorrectlyPswdOrEmail) {
+    return res.status(HTTP_STATUS_UNAUTHORIZED).send({ message : err.message });
   }
-  if (err.name === 'Чужая карточка!') {
-    return res.status(HTTP_STATUS_BAD_REQUEST).send({ message : 'Можно удалять только свои карточки!' })
+  if (err instanceof AlienCard) {
+    return res.status(err.statusCode).send({ message : err.message })
   }
   if (err.code === 11000) {
     return res.status(HTTP_STATUS_CONFLICT).send({ message : 'Пользователь с данным email уже существует' })
