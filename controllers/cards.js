@@ -1,4 +1,5 @@
 const cardModel = require("../models/card");
+const mongoose = require("mongoose");
 
 const {
   HTTP_STATUS_OK,                   // 200
@@ -70,12 +71,12 @@ function toggleLikeCard(req, res, methodObj, next) {
 
 function togglelikeCardDecorator(func) {
 
-  return function(req, res) {
+  return function(req, res, next) {
     if (req.method === 'PUT') {
-      return func(req, res, { $addToSet: { likes: req.user._id } }) // добавить _id в массив, если его там нет
+      return func(req, res, { $addToSet: { likes: req.user._id } }, next) // добавить _id в массив, если его там нет
     }
     if (req.method === 'DELETE') {
-      return func(req, res, { $pull: { likes: req.user._id } })   // убрать _id из массива
+      return func(req, res, { $pull: { likes: req.user._id } }, next)   // убрать _id из массива
     }
   }
 }

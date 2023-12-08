@@ -89,14 +89,14 @@ function login (req, res, next) {
 
       // вернём токен
       res.status(HTTP_STATUS_OK)
-      .send({ message : "Токен успешно отправлен в куки" })
       .cookie('jwt', token, {
       // token - наш JWT токен, который мы отправляем
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
         sameSite: true
       })
-      .end()  // если у ответа нет тела, можно использовать метод end);
+      .send({ message : "Токен успешно отправлен в куки" })
+      .end()
     })
     .catch(next);
 };

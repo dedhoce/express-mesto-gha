@@ -18,7 +18,7 @@ const serverError = (res) => {
 }
 
 module.exports = (err, req, res, next) => {
-  console.log(err)
+  //console.log(err)
 
   if (err instanceof mongoose.Error.CastError) {
     return res.status(HTTP_STATUS_BAD_REQUEST).send({message : "Invalid ID"});
@@ -42,5 +42,6 @@ module.exports = (err, req, res, next) => {
     return res.status(HTTP_STATUS_CONFLICT).send({ message : 'Пользователь с данным email уже существует' })
   }
   serverError(res)
+
 }
 
