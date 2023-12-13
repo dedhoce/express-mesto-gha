@@ -14,6 +14,12 @@ router.get('/', function (req, res) {
   res.status(HTTP_STATUS_OK).send('Express GET');
 });
 
+router.get('/crash-test', () => {
+  setTimeout(() => {
+    throw new Error('Сервер сейчас упадёт');
+  }, 0);
+});
+
 router.post('/signin', celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net', 'ru'] } }),
